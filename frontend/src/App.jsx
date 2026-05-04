@@ -5,6 +5,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Blogs from './pages/Blogs';
 import Dashboard from './pages/Dashboard';
+import CreateBlog from './pages/CreateBlog';
+import SingleBlog from './pages/SingleBlog';
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
           <Route path="register" element={<Register />} />
           <Route path="blogs" element={<Blogs />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="create" element={<CreateBlog />} />
+          <Route path="blog/:slug" element={<SingleBlog />} />
         </Route>
       </Routes>
     </BrowserRouter>
