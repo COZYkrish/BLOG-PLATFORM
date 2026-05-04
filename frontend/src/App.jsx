@@ -7,6 +7,7 @@ import Blogs from './pages/Blogs';
 import Dashboard from './pages/Dashboard';
 import CreateBlog from './pages/CreateBlog';
 import SingleBlog from './pages/SingleBlog';
+import Bookmarks from './pages/Bookmarks';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="create" element={<CreateBlog />} />
           <Route path="blog/:slug" element={<SingleBlog />} />
+          <Route path="bookmarks" element={<Bookmarks />} />
         </Route>
       </Routes>
     </BrowserRouter>
