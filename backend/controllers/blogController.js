@@ -1,10 +1,18 @@
 import Blog from '../models/Blog.js';
 import User from '../models/User.js';
+import Comment from '../models/Comment.js';
+
+const createSlug = (title = '') => title
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+    .substring(0, 70);
 
 export const getBlogs = async (req, res) => {
     try {
         const { search, category, tag, sort } = req.query;
-        let query = {};
+        let query = { status: 'published' };
 
         if (search) {
             query.$or = [
@@ -23,14 +31,20 @@ export const getBlogs = async (req, res) => {
 
         let sortOption = { createdAt: -1 };
         if (sort === 'popular') {
-            sortOption = { views: -1 };
+            sortOption = { views: -1, createdAt: -1 };
         } else if (sort === 'trending') {
-            sortOption = { 'likes': -1 };
+            sortOption = { likesCount: -1, createdAt: -1 };
         }
 
-        const blogs = await Blog.find(query)
-            .populate('author', 'name avatar')
-            .sort(sortOption);
+        let blogs = await Blog.find(query).populate('author', 'name avatar');
+
+        if (sort === 'trending') {
+            blogs = blogs.sort((a, b) => b.likes.length - a.likes.length || b.createdAt - a.createdAt);
+        } else {
+            blogs = await Blog.find(query)
+                .populate('author', 'name avatar')
+                .sort(sortOption);
+        }
 
         res.json(blogs);
     } catch (error) {
@@ -84,24 +98,33 @@ export const getRelatedBlogs = async (req, res) => {
 
 export const createBlog = async (req, res) => {
     try {
-        const { title, slug, content, image, category, tags } = req.body;
+        const { title, content, image, category, tags, status = 'published' } = req.body;
 
         if (!title || !content || !category) {
             return res.status(400).json({ message: 'Title, content, and category are required' });
         }
 
-        const slugExists = await Blog.findOne({ slug });
+        let slug = createSlug(req.body.slug || title);
+        const baseSlug = slug;
+        let suffix = 1;
+        while (await Blog.findOne({ slug })) {
+            slug = `${baseSlug}-${suffix}`;
+            suffix += 1;
+        }
+
+        const slugExists = false;
         if (slugExists) {
             return res.status(400).json({ message: 'Blog with this slug already exists' });
         }
 
         const blog = new Blog({
             title,
-            slug: slug || title.toLowerCase().replace(/\s+/g, '-').substring(0, 50),
+            slug,
             content,
             image,
             category,
-            tags: tags || [],
+            tags: Array.isArray(tags) ? tags.filter(Boolean) : [],
+            status,
             author: req.user._id
         });
 
@@ -130,6 +153,17 @@ export const updateBlog = async (req, res) => {
         blog.image = req.body.image || blog.image;
         blog.category = req.body.category || blog.category;
         blog.tags = req.body.tags || blog.tags;
+        blog.status = req.body.status || blog.status;
+        if (req.body.title && req.body.title !== blog.title) {
+            let slug = createSlug(req.body.title);
+            const baseSlug = slug;
+            let suffix = 1;
+            while (await Blog.findOne({ slug, _id: { $ne: blog._id } })) {
+                slug = `${baseSlug}-${suffix}`;
+                suffix += 1;
+            }
+            blog.slug = slug;
+        }
 
         const updatedBlog = await blog.save();
         await updatedBlog.populate('author', 'name avatar');
@@ -152,6 +186,7 @@ export const deleteBlog = async (req, res) => {
         }
 
         await blog.deleteOne();
+        await Comment.deleteMany({ blog: blog._id });
         res.json({ message: 'Blog removed' });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -210,8 +245,10 @@ export const getBlogStats = async (req, res) => {
                 }
             }
         ]);
+        const blogIds = await Blog.find({ author: req.user._id }).distinct('_id');
+        const totalComments = await Comment.countDocuments({ blog: { $in: blogIds } });
 
-        res.json(stats[0] || { totalPosts: 0, totalLikes: 0, totalViews: 0 });
+        res.json({ ...(stats[0] || { totalPosts: 0, totalLikes: 0, totalViews: 0 }), totalComments });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

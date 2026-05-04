@@ -27,6 +27,7 @@ router.get('/related/:id', getRelatedBlogs);
 router.post('/', protect, createBlog);
 router.get('/my-blogs', protect, getUserBlogs);
 router.get('/stats', protect, getBlogStats);
+router.get('/:slug', getBlogBySlug);
 
 router.put('/:id', protect, updateBlog);
 router.delete('/:id', protect, deleteBlog);

@@ -7,6 +7,7 @@ const blogSchema = new mongoose.Schema({
     image: { type: String, default: '' },
     category: { type: String, required: true },
     tags: [{ type: String }],
+    status: { type: String, enum: ['draft', 'published'], default: 'published' },
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     views: { type: Number, default: 0 }

@@ -5,7 +5,7 @@ export const getComments = async (req, res) => {
     try {
         const comments = await Comment.find({ blog: req.params.blogId })
             .populate('user', 'name avatar')
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: 1 });
         res.json(comments);
     } catch (error) {
         res.status(500).json({ message: error.message });

@@ -56,12 +56,14 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
         try {
             setLoading(true);
-            const [blogsData, statsData] = await Promise.all([
+            const [blogsResponse, statsResponse] = await Promise.all([
                 blogAPI.getUserBlogs(),
                 blogAPI.getStats(),
             ]);
+            const blogsData = blogsResponse.data || [];
+            const statsData = statsResponse.data || {};
 
-            setBlogs(blogsData || []);
+            setBlogs(blogsData);
 
             // Calculate stats
             const totalLikes = (blogsData || []).reduce((sum, blog) => sum + (blog.likes?.length || 0), 0);
@@ -69,10 +71,10 @@ const Dashboard = () => {
             const totalComments = (blogsData || []).reduce((sum, blog) => sum + (blog.comments?.length || 0), 0);
 
             setStats({
-                totalPosts: blogsData?.length || 0,
-                totalLikes,
-                totalViews,
-                totalComments,
+                totalPosts: statsData.totalPosts ?? blogsData.length,
+                totalLikes: statsData.totalLikes ?? totalLikes,
+                totalViews: statsData.totalViews ?? totalViews,
+                totalComments: statsData.totalComments ?? totalComments,
             });
         } catch (error) {
             addToast('Error loading dashboard', 'error');
@@ -301,3 +303,6 @@ const Dashboard = () => {
             </div>
         </div>
     );
+};
+
+export default Dashboard;
