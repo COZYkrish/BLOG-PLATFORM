@@ -8,13 +8,11 @@ The project is designed as a complete full-stack application: a React + Vite fro
 
 ## 📸 Preview
 
-> Replace these images with real screenshots from your running app when you deploy or submit the project.
+![LuminaBlog Home Page](<PHOTOS/HOME PAGE.png>)
 
-![LuminaBlog Hero](frontend/src/assets/hero.png)
-
-| Home / Explore | Create Blog | Dashboard |
+| Home Page | Explore Page | Create Blog |
 | --- | --- | --- |
-| ![Home Preview](frontend/src/assets/hero.png) | ![Editor Preview](frontend/src/assets/hero.png) | ![Dashboard Preview](frontend/src/assets/hero.png) |
+| ![Home Page](<PHOTOS/HOME PAGE.png>) | ![Explore Page](<PHOTOS/explore page.png>) | ![Create Blog](<PHOTOS/CREATE BLOG.png>) |
 
 ---
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Bookmark, Trash2 } from 'lucide-react';
 import { bookmarkAPI } from '../services/api';
@@ -35,21 +35,21 @@ const Bookmarks = () => {
     const [loading, setLoading] = useState(true);
     const [removingId, setRemovingId] = useState(null);
 
-    useEffect(() => {
-        if (user) fetchBookmarks();
-    }, [user]);
-
-    const fetchBookmarks = async () => {
+    const fetchBookmarks = useCallback(async () => {
         try {
             setLoading(true);
-            const data = await bookmarkAPI.getAll();
-            setBookmarks(data || []);
-        } catch (error) {
+            const { data } = await bookmarkAPI.getAll();
+            setBookmarks(Array.isArray(data) ? data : []);
+        } catch {
             addToast('Error loading bookmarks', 'error');
         } finally {
             setLoading(false);
         }
-    };
+    }, [addToast]);
+
+    useEffect(() => {
+        if (user) queueMicrotask(() => fetchBookmarks());
+    }, [fetchBookmarks, user]);
 
     const handleRemoveBookmark = async (blogId) => {
         try {
@@ -57,14 +57,14 @@ const Bookmarks = () => {
             await bookmarkAPI.toggle(blogId);
             setBookmarks(bookmarks.filter(b => b._id !== blogId));
             addToast('Bookmark removed', 'success');
-        } catch (error) {
+        } catch {
             addToast('Error removing bookmark', 'error');
         } finally {
             setRemovingId(null);
         }
     };
 
-    const handleLike = async (blogId) => {
+    const handleLike = async () => {
         // Re-fetch bookmarks to keep them in sync
         await fetchBookmarks();
     };

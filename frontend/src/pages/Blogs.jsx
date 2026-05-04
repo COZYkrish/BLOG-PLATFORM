@@ -51,9 +51,9 @@ const Blogs = () => {
                     blogAPI.getCategories(),
                     blogAPI.getTags()
                 ]);
-                if (categoryRes?.length) setCategories(categoryRes);
-                if (tagRes?.length) setTags(tagRes);
-            } catch (error) {
+                if (categoryRes.data?.length) setCategories(categoryRes.data);
+                if (tagRes.data?.length) setTags(tagRes.data);
+            } catch {
                 addToast('Error loading categories and tags', 'error');
             }
         };
@@ -67,9 +67,9 @@ const Blogs = () => {
         const timer = setTimeout(async () => {
             try {
                 setLoading(true);
-                const data = await blogAPI.getAll(params);
-                setBlogs(data || []);
-            } catch (error) {
+                const { data } = await blogAPI.getAll(params);
+                setBlogs(Array.isArray(data) ? data : []);
+            } catch {
                 addToast('Error loading blogs', 'error');
                 setBlogs([]);
             } finally {
@@ -91,12 +91,12 @@ const Blogs = () => {
         setFilters({ search: '', category: '', tag: '', sort: 'latest' });
     };
 
-    const handleLike = async (blogId) => {
+    const handleLike = async () => {
         // Re-fetch blogs to keep them in sync with likes
         try {
-            const data = await blogAPI.getAll(filters);
-            setBlogs(data || []);
-        } catch (error) {
+            const { data } = await blogAPI.getAll(filters);
+            setBlogs(Array.isArray(data) ? data : []);
+        } catch {
             addToast('Error updating likes', 'error');
         }
     };

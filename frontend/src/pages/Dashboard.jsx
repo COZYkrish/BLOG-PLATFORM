@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus, Edit, Trash2, Eye, Heart, MessageCircle, TrendingUp, Loader } from 'lucide-react';
@@ -44,16 +44,7 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [deletingId, setDeletingId] = useState(null);
 
-    useEffect(() => {
-        if (!user) {
-            navigate('/login');
-            return;
-        }
-
-        fetchDashboardData();
-    }, [user, navigate]);
-
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = useCallback(async () => {
         try {
             setLoading(true);
             const [blogsResponse, statsResponse] = await Promise.all([
@@ -76,12 +67,21 @@ const Dashboard = () => {
                 totalViews: statsData.totalViews ?? totalViews,
                 totalComments: statsData.totalComments ?? totalComments,
             });
-        } catch (error) {
+        } catch {
             addToast('Error loading dashboard', 'error');
         } finally {
             setLoading(false);
         }
-    };
+    }, [addToast]);
+
+    useEffect(() => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+
+        queueMicrotask(() => fetchDashboardData());
+    }, [fetchDashboardData, user, navigate]);
 
     const handleDeleteBlog = async (blogId) => {
         if (!window.confirm('Are you sure you want to delete this blog? This action cannot be undone.')) {
@@ -95,7 +95,7 @@ const Dashboard = () => {
             addToast('Blog deleted successfully', 'success');
             // Recalculate stats
             await fetchDashboardData();
-        } catch (error) {
+        } catch {
             addToast('Error deleting blog', 'error');
         } finally {
             setDeletingId(null);

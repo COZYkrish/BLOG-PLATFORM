@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Upload, Save, Loader, Plus, X } from 'lucide-react';
@@ -6,7 +6,7 @@ import { blogAPI, uploadAPI } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { generateSlug } from '../utils/helpers';
-import { Input, TextArea, Select, Button } from '../components/UI';
+import { Input, TextArea, Select } from '../components/UI';
 
 const CreateBlog = () => {
     const { id } = useParams();
@@ -33,22 +33,13 @@ const CreateBlog = () => {
 
     const categories = ['Tech', 'Travel', 'Lifestyle', 'Business', 'Design', 'Food', 'Health', 'Education'];
 
-    useEffect(() => {
-        if (!user) {
-            navigate('/login');
-            return;
-        }
-
-        if (id) {
-            fetchBlog();
-        }
-    }, [id, user, navigate]);
-
-    const fetchBlog = async () => {
+    const fetchBlog = useCallback(async () => {
         try {
             setLoading(true);
-            // Get blog by ID or slug
-            const blog = await blogAPI.getById(id);
+            const { data: userBlogs } = await blogAPI.getUserBlogs();
+            const blog = userBlogs.find((item) => item._id === id);
+            if (!blog) throw new Error('Blog not found');
+
             setFormData({
                 title: blog.title,
                 content: blog.content,
@@ -58,13 +49,24 @@ const CreateBlog = () => {
             });
             setTags(blog.tags || []);
             setImagePreview(blog.image);
-        } catch (error) {
+        } catch {
             addToast('Error loading blog', 'error');
             navigate('/dashboard');
         } finally {
             setLoading(false);
         }
-    };
+    }, [addToast, id, navigate]);
+
+    useEffect(() => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+
+        if (id) {
+            queueMicrotask(() => fetchBlog());
+        }
+    }, [fetchBlog, id, user, navigate]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -87,14 +89,14 @@ const CreateBlog = () => {
         try {
             setUploadingImage(true);
             const formDataObj = new FormData();
-            formDataObj.append('file', file);
+            formDataObj.append('image', file);
 
-            const response = await uploadAPI.image(formDataObj);
-            setFormData(prev => ({ ...prev, image: response.url }));
-            setImagePreview(response.url);
+            const { data } = await uploadAPI.image(formDataObj);
+            setFormData(prev => ({ ...prev, image: data.url }));
+            setImagePreview(data.url);
             addToast('Image uploaded successfully', 'success');
         } catch (error) {
-            addToast('Error uploading image', 'error');
+            addToast(error.response?.data?.message || 'Error uploading image', 'error');
         } finally {
             setUploadingImage(false);
         }
@@ -144,13 +146,14 @@ const CreateBlog = () => {
                 addToast('Blog updated successfully!', 'success');
                 newBlog = { slug: formData.slug };
             } else {
-                newBlog = await blogAPI.create(payload);
+                const { data } = await blogAPI.create(payload);
+                newBlog = data;
                 addToast('Blog created successfully!', 'success');
             }
 
             navigate(`/blog/${newBlog.slug}`);
         } catch (error) {
-            addToast(error.message || 'Error saving blog', 'error');
+            addToast(error.response?.data?.message || error.message || 'Error saving blog', 'error');
         } finally {
             setSubmitting(false);
         }

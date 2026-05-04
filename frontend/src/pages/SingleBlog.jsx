@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -38,37 +38,37 @@ const SingleBlog = () => {
     const [deletingCommentId, setDeletingCommentId] = useState(null);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        fetchBlogData();
-    }, [slug]);
-
-    const fetchBlogData = async () => {
+    const fetchBlogData = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
 
-            const [blogData, commentsData, relatedData] = await Promise.all([
-                blogAPI.getBySlug(slug),
-                commentAPI.getByBlog(slug),
-                blogAPI.getRelated(slug),
+            const { data: blogData } = await blogAPI.getBySlug(slug);
+            const [commentsResponse, relatedResponse] = await Promise.all([
+                commentAPI.getByBlog(blogData._id),
+                blogAPI.getRelated(blogData._id),
             ]);
 
             setBlog(blogData);
-            setComments(commentsData || []);
-            setRelatedBlogs(relatedData || []);
+            setComments(Array.isArray(commentsResponse.data) ? commentsResponse.data : []);
+            setRelatedBlogs(Array.isArray(relatedResponse.data) ? relatedResponse.data : []);
 
             // Check if liked and bookmarked
             if (user && blogData) {
-                setIsLiked(blogData.likes?.includes(user._id) || false);
+                setIsLiked(blogData.likes?.some((id) => String(id?._id || id) === String(user._id)) || false);
                 setIsBookmarked(user.bookmarks?.includes(blogData._id) || false);
             }
-        } catch (err) {
+        } catch {
             setError('Failed to load blog');
             addToast('Error loading blog', 'error');
         } finally {
             setLoading(false);
         }
-    };
+    }, [addToast, slug, user]);
+
+    useEffect(() => {
+        queueMicrotask(() => fetchBlogData());
+    }, [fetchBlogData]);
 
     const handleLike = async () => {
         if (!user) {
@@ -87,7 +87,7 @@ const SingleBlog = () => {
                     : [...(prev.likes || []), user._id],
             }));
             addToast(isLiked ? 'Like removed' : 'Blog liked!', 'success');
-        } catch (err) {
+        } catch {
             addToast('Error liking blog', 'error');
         }
     };
@@ -103,7 +103,7 @@ const SingleBlog = () => {
             await bookmarkAPI.toggle(blog._id);
             setIsBookmarked(!isBookmarked);
             addToast(isBookmarked ? 'Bookmark removed' : 'Blog bookmarked!', 'success');
-        } catch (err) {
+        } catch {
             addToast('Error bookmarking blog', 'error');
         }
     };
@@ -124,11 +124,11 @@ const SingleBlog = () => {
 
         try {
             setSubmittingComment(true);
-            const newComment = await commentAPI.create(blog._id, { text: commentText });
-            setComments([newComment, ...comments]);
+            const { data: newComment } = await commentAPI.create({ blogId: blog._id, text: commentText });
+            setComments([...comments, newComment]);
             setCommentText('');
             addToast('Comment added successfully', 'success');
-        } catch (err) {
+        } catch {
             addToast('Error adding comment', 'error');
         } finally {
             setSubmittingComment(false);
@@ -141,7 +141,7 @@ const SingleBlog = () => {
             await commentAPI.delete(commentId);
             setComments(comments.filter(c => c._id !== commentId));
             addToast('Comment deleted', 'success');
-        } catch (err) {
+        } catch {
             addToast('Error deleting comment', 'error');
         } finally {
             setDeletingCommentId(null);
