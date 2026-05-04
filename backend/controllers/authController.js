@@ -20,6 +20,10 @@ const generateToken = (res, userId) => {
 export const registerUser = async (req, res) => {
     try {
         const { name, email, password } = req.body;
+
+        if (!name || !email || !password) {
+            return res.status(400).json({ message: 'Please provide all required fields' });
+        }
         
         const userExists = await User.findOne({ email });
         if (userExists) {
@@ -55,6 +59,10 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Email and password are required' });
+        }
         
         const user = await User.findOne({ email });
 
@@ -85,18 +93,62 @@ export const logoutUser = async (req, res) => {
 
 export const getUserProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
+        const user = await User.findById(req.user._id).select('-password');
         if (user) {
-            res.json({
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                avatar: user.avatar,
-                bookmarks: user.bookmarks
-            });
+            res.json(user);
         } else {
             res.status(404).json({ message: 'User not found' });
         }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const updateUserProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        user.name = req.body.name || user.name;
+        user.email = req.body.email || user.email;
+        user.avatar = req.body.avatar || user.avatar;
+
+        const updatedUser = await user.save();
+        
+        res.json({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            avatar: updatedUser.avatar
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const changePassword = async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+
+        if (!oldPassword || !newPassword) {
+            return res.status(400).json({ message: 'Old password and new password are required' });
+        }
+
+        const user = await User.findById(req.user._id);
+
+        if (!(await bcrypt.compare(oldPassword, user.password))) {
+            return res.status(401).json({ message: 'Old password is incorrect' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        
+        await user.save();
+
+        res.json({ message: 'Password changed successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
