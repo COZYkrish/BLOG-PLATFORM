@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Facebook, Twitter, Github, Mail } from 'lucide-react';
+import { Code2, Mail, Radio, Send } from 'lucide-react';
 
 const Footer = () => {
     const currentYear = new Date().getFullYear();
@@ -67,21 +67,21 @@ const Footer = () => {
                                 className="text-gray-400 hover:text-blue-400 transition-colors"
                                 whileHover={{ scale: 1.2, rotate: 10 }}
                             >
-                                <Facebook size={20} />
+                                <Radio size={20} />
                             </motion.a>
                             <motion.a 
                                 href="#"
                                 className="text-gray-400 hover:text-blue-400 transition-colors"
                                 whileHover={{ scale: 1.2, rotate: 10 }}
                             >
-                                <Twitter size={20} />
+                                <Send size={20} />
                             </motion.a>
                             <motion.a 
                                 href="#"
                                 className="text-gray-400 hover:text-blue-400 transition-colors"
                                 whileHover={{ scale: 1.2, rotate: 10 }}
                             >
-                                <Github size={20} />
+                                <Code2 size={20} />
                             </motion.a>
                             <motion.a 
                                 href="mailto:hello@luminablog.com"

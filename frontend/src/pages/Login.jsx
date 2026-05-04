@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
-import { PrimaryButton, SecondaryButton, Input } from '../components/UI';
-import { validateEmail, validatePassword } from '../utils/helpers';
+import { PrimaryButton, Input } from '../components/UI';
+import { validateEmail } from '../utils/helpers';
 import { Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {

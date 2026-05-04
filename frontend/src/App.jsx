@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
-import { ToastContainer, useToast } from './components/Toast';
+import { ToastContainer } from './components/Toast';
+import { useToast } from './hooks/useToast';
 import Layout from './layouts/Layout';
 import Home from './pages/Home';
 import Login from './pages/Login';

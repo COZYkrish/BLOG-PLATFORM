@@ -23,10 +23,11 @@ export const Toast = ({ message, type = 'success', onClose }) => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className={`${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2`}
+            className={`${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 max-w-sm`}
         >
             <Icon size={20} />
-            <span>{message}</span>
+            <span className="text-sm">{message}</span>
+            <button onClick={onClose} className="ml-2 text-white/80 hover:text-white">x</button>
         </motion.div>
     );
 };

@@ -1,34 +1,33 @@
-import { createContext, useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { authAPI } from '../services/api';
-
-export const AuthContext = createContext();
+import { AuthContext } from './AuthContextCore';
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            fetchUser();
-        } else {
-            setLoading(false);
-        }
-    }, []);
-
-    const fetchUser = async () => {
+    const fetchUser = useCallback(async () => {
         try {
             const { data } = await authAPI.getProfile();
             setUser(data);
             setError(null);
-        } catch (err) {
+        } catch {
             setUser(null);
             localStorage.removeItem('token');
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            queueMicrotask(() => fetchUser());
+        } else {
+            queueMicrotask(() => setLoading(false));
+        }
+    }, [fetchUser]);
 
     const login = async (email, password) => {
         try {
@@ -41,7 +40,7 @@ export const AuthProvider = ({ children }) => {
         } catch (err) {
             const message = err.response?.data?.message || 'Login failed';
             setError(message);
-            throw new Error(message);
+            throw new Error(message, { cause: err });
         } finally {
             setLoading(false);
         }
@@ -58,7 +57,7 @@ export const AuthProvider = ({ children }) => {
         } catch (err) {
             const message = err.response?.data?.message || 'Registration failed';
             setError(message);
-            throw new Error(message);
+            throw new Error(message, { cause: err });
         } finally {
             setLoading(false);
         }
@@ -85,7 +84,7 @@ export const AuthProvider = ({ children }) => {
         } catch (err) {
             const message = err.response?.data?.message || 'Update failed';
             setError(message);
-            throw new Error(message);
+            throw new Error(message, { cause: err });
         }
     };
 
@@ -96,7 +95,7 @@ export const AuthProvider = ({ children }) => {
         } catch (err) {
             const message = err.response?.data?.message || 'Password change failed';
             setError(message);
-            throw new Error(message);
+            throw new Error(message, { cause: err });
         }
     };
 

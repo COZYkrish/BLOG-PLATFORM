@@ -17,10 +17,12 @@ const Home = () => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const [blogs, cats] = await Promise.all([
+                const [blogsRes, catsRes] = await Promise.all([
                     blogAPI.getAll({ sort: 'popular' }),
                     blogAPI.getCategories()
                 ]);
+                const blogs = blogsRes.data || [];
+                const cats = catsRes.data || [];
                 
                 setFeaturedBlogs(blogs.slice(0, 3));
                 setLatestBlogs(blogs.slice(0, 6));

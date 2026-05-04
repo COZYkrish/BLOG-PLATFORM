@@ -4,13 +4,14 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { PrimaryButton, Input } from '../components/UI';
-import { Settings, Lock, User } from 'lucide-react';
+import { Lock, Moon, Sun, User } from 'lucide-react';
 
 const SettingsPage = () => {
     const { user, updateProfile, changePassword } = useAuth();
     const { addToast } = useToast();
     const [activeTab, setActiveTab] = useState('profile');
     const [loading, setLoading] = useState(false);
+    const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
 
     // Profile form state
     const [profileData, setProfileData] = useState({
@@ -57,6 +58,14 @@ const SettingsPage = () => {
         }
     };
 
+    const toggleTheme = () => {
+        const nextTheme = theme === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+        localStorage.setItem('theme', nextTheme);
+        document.documentElement.classList.toggle('light', nextTheme === 'light');
+        addToast(`${nextTheme === 'dark' ? 'Dark' : 'Light'} mode enabled`, 'success');
+    };
+
     return (
         <div className="max-w-4xl mx-auto px-4 py-12">
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
@@ -87,6 +96,17 @@ const SettingsPage = () => {
                 >
                     <Lock className="inline mr-2" size={20} />
                     Password
+                </button>
+                <button
+                    onClick={() => setActiveTab('preferences')}
+                    className={`py-4 px-6 font-semibold transition-colors ${
+                        activeTab === 'preferences'
+                            ? 'text-blue-400 border-b-2 border-blue-400'
+                            : 'text-gray-400 hover:text-gray-300'
+                    }`}
+                >
+                    {theme === 'dark' ? <Moon className="inline mr-2" size={20} /> : <Sun className="inline mr-2" size={20} />}
+                    Theme
                 </button>
             </motion.div>
 
@@ -174,6 +194,29 @@ const SettingsPage = () => {
                         </PrimaryButton>
                     </div>
                 </motion.form>
+            )}
+
+            {activeTab === 'preferences' && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-8 max-w-2xl rounded-2xl border border-white/10 bg-white/[0.04] p-6"
+                >
+                    <div className="flex items-center justify-between gap-4">
+                        <div>
+                            <h2 className="text-xl font-bold text-white">Appearance</h2>
+                            <p className="text-sm text-gray-400 mt-1">Switch between the premium dark interface and a lighter reading mode.</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={toggleTheme}
+                            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm text-white hover:border-blue-400/50"
+                        >
+                            {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
+                            {theme === 'dark' ? 'Dark' : 'Light'}
+                        </button>
+                    </div>
+                </motion.div>
             )}
         </div>
     );

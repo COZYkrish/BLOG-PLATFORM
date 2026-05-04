@@ -1,80 +1,144 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import api from '../services/api';
-import { AuthContext } from '../context/AuthContext';
+import { Bookmark, Trash2 } from 'lucide-react';
+import { bookmarkAPI } from '../services/api';
+import { useToast } from '../hooks/useToast';
+import { useAuth } from '../hooks/useAuth';
+import BlogCard from '../components/BlogCard';
+import { BlogCardSkeleton } from '../components/Skeletons';
+import { EmptyState } from '../components/States';
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1,
+            delayChildren: 0.2,
+        },
+    },
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.5, ease: 'easeOut' },
+    },
+};
 
 const Bookmarks = () => {
-    const { user } = useContext(AuthContext);
+    const { user } = useAuth();
+    const { addToast } = useToast();
     const [bookmarks, setBookmarks] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [removingId, setRemovingId] = useState(null);
 
     useEffect(() => {
-        const fetchBookmarks = async () => {
-            try {
-                const { data } = await api.get('/bookmarks');
-                setBookmarks(data);
-            } catch (error) {
-                console.error(error);
-            } finally {
-                setLoading(false);
-            }
-        };
         if (user) fetchBookmarks();
     }, [user]);
 
-    const removeBookmark = async (blogId) => {
+    const fetchBookmarks = async () => {
         try {
-            await api.post(`/bookmarks/${blogId}`);
-            setBookmarks(bookmarks.filter(b => b._id !== blogId));
+            setLoading(true);
+            const data = await bookmarkAPI.getAll();
+            setBookmarks(data || []);
         } catch (error) {
-            console.error(error);
+            addToast('Error loading bookmarks', 'error');
+        } finally {
+            setLoading(false);
         }
     };
 
-    if (!user) return <div className="text-center py-20 text-gray-400">Please log in to view bookmarks.</div>;
+    const handleRemoveBookmark = async (blogId) => {
+        try {
+            setRemovingId(blogId);
+            await bookmarkAPI.toggle(blogId);
+            setBookmarks(bookmarks.filter(b => b._id !== blogId));
+            addToast('Bookmark removed', 'success');
+        } catch (error) {
+            addToast('Error removing bookmark', 'error');
+        } finally {
+            setRemovingId(null);
+        }
+    };
 
-    if (loading) return <div className="text-center py-20 text-gray-400">Loading...</div>;
+    const handleLike = async (blogId) => {
+        // Re-fetch bookmarks to keep them in sync
+        await fetchBookmarks();
+    };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <h1 className="text-4xl font-bold mb-10">Your Bookmarks</h1>
-            
-            {bookmarks.length === 0 ? (
-                <div className="bg-dark p-10 rounded-2xl border border-gray-800 text-center text-gray-400">
-                    You have no saved blogs yet. <Link to="/blogs" className="text-primary hover:underline">Explore blogs</Link>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {bookmarks.map((blog, index) => (
-                        <motion.div 
-                            key={blog._id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className="bg-dark rounded-2xl border border-gray-800 overflow-hidden hover:shadow-xl transition-all"
-                        >
-                            {blog.image ? (
-                                <img src={blog.image} alt={blog.title} className="w-full h-48 object-cover" />
-                            ) : (
-                                <div className="w-full h-48 bg-gray-800"></div>
-                            )}
-                            <div className="p-6">
-                                <Link to={`/blog/${blog.slug}`}>
-                                    <h2 className="text-xl font-bold mb-2 hover:text-primary transition-colors line-clamp-2">{blog.title}</h2>
-                                </Link>
-                                <button 
-                                    onClick={() => removeBookmark(blog._id)}
-                                    className="mt-4 text-sm text-red-500 hover:text-red-400 transition-colors"
+        <div className="min-h-screen bg-slate-950">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                {/* Header */}
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="mb-12"
+                >
+                    <div className="flex items-center gap-3 mb-3">
+                        <Bookmark className="text-primary" size={32} />
+                        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                            My Bookmarks
+                        </h1>
+                    </div>
+                    <p className="text-gray-400 text-lg">
+                        {bookmarks.length} {bookmarks.length === 1 ? 'blog saved' : 'blogs saved'}
+                    </p>
+                </motion.div>
+
+                {/* Loading State */}
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {[...Array(6)].map((_, i) => (
+                            <BlogCardSkeleton key={i} />
+                        ))}
+                    </div>
+                ) : bookmarks.length > 0 ? (
+                    /* Bookmarks Grid */
+                    <motion.div
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="show"
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                    >
+                        {bookmarks.map((blog) => (
+                            <motion.div
+                                key={blog._id}
+                                variants={itemVariants}
+                                className="relative group"
+                            >
+                                <BlogCard blog={blog} onLike={handleLike} />
+                                
+                                {/* Remove Button */}
+                                <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => handleRemoveBookmark(blog._id)}
+                                    disabled={removingId === blog._id}
+                                    className="absolute top-4 right-4 bg-red-500/10 hover:bg-red-500/20 backdrop-blur-sm p-2.5 rounded-lg text-red-400 hover:text-red-300 transition-all duration-200 z-20 disabled:opacity-50 border border-red-500/20 hover:border-red-500/40"
                                 >
-                                    Remove Bookmark
-                                </button>
-                            </div>
-                        </motion.div>
-                    ))}
-                </div>
-            )}
+                                    <Trash2 size={18} />
+                                </motion.button>
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                ) : (
+                    /* Empty State */
+                    <EmptyState
+                        icon={Bookmark}
+                        title="No bookmarks yet"
+                        description="Start bookmarking blogs to save them for later reading. Explore our collection and save your favorites!"
+                        actionLabel="Explore Blogs"
+                        actionLink="/blogs"
+                    />
+                )}
+            </div>
         </div>
     );
 };
+
 export default Bookmarks;

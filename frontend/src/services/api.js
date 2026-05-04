@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:5000/api',
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
     withCredentials: true
 });
 
@@ -27,7 +27,7 @@ export const authAPI = {
 // Blog APIs
 export const blogAPI = {
     getAll: (params) => api.get('/blogs', { params }),
-    getBySlug: (slug) => api.get(`/blogs/slug/${slug}`),
+    getBySlug: (slug) => api.get(`/blogs/${slug}`),
     create: (data) => api.post('/blogs', data),
     update: (id, data) => api.put(`/blogs/${id}`, data),
     delete: (id) => api.delete(`/blogs/${id}`),
