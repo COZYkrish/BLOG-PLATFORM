@@ -126,7 +126,7 @@ The project is designed as a complete full-stack application: a React + Vite fro
 
 ## 🌐 Pages And Routes
 
-| Route | Page | Description |
+<!-- | Route | Page | Description |
 | --- | --- | --- |
 | `/` | Home | Hero, featured blogs, latest posts, categories |
 | `/login` | Login | Animated login form with validation |
@@ -137,7 +137,7 @@ The project is designed as a complete full-stack application: a React + Vite fro
 | `/edit/:id` | Edit Blog | Protected editor for existing posts |
 | `/dashboard` | Dashboard | User stats and post management |
 | `/bookmarks` | Bookmarks | Saved posts list |
-| `/settings` | Settings | Profile, password, and theme preferences |
+| `/settings` | Settings | Profile, password, and theme preferences | -->
 
 ---
 
