@@ -19,14 +19,14 @@ The project is designed as a complete full-stack application: a React + Vite fro
 ## ✨ Key Features
 
 ### 🔐 Authentication
-
+<!-- 
 - User registration and login
 - Password hashing with `bcryptjs`
 - JWT-based authentication
 - Token storage in `localStorage`
 - Protected frontend routes
 - Authenticated backend middleware
-- Auto-login using saved token
+- Auto-login using saved token -->
 
 ### 📝 Blog System
 
