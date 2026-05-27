@@ -14,11 +14,11 @@ export default {
       //   dark: "#0f172a",
       //   darker: "#020617",
       // },
-      animation: {
-        blob: 'blob 7s infinite',
-        'fade-in': 'fadeIn 0.5s ease-in-out',
-        'slide-in': 'slideIn 0.5s ease-out',
-      },
+      // animation: {
+      //   blob: 'blob 7s infinite',
+      //   'fade-in': 'fadeIn 0.5s ease-in-out',
+      //   'slide-in': 'slideIn 0.5s ease-out',
+      // },
       keyframes: {
         blob: {
           '0%': { transform: 'translate(0, 0) scale(1)' },
