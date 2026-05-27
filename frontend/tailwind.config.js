@@ -8,12 +8,12 @@ export default {
   theme: {
     extend: {
       colors: {
-      //   primary: "#3b82f6",
-      //   secondary: "#a855f7",
-      //   accent: "#ec4899",
-      //   dark: "#0f172a",
-      //   darker: "#020617",
-      // },
+        primary: "#3b82f6",
+        secondary: "#a855f7",
+        accent: "#ec4899",
+        dark: "#0f172a",
+        darker: "#020617",
+      },
       // animation: {
       //   blob: 'blob 7s infinite',
       //   'fade-in': 'fadeIn 0.5s ease-in-out',
